@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-zinc-950 text-zinc-100 dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhotoEnhance Pro</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; user-select: none; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+
+        /* Range input styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #27272a;
+            border-radius: 2px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -5px;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+            transition: transform 0.1s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #60a5fa;
+        }
+
+        /* Crop Overlay grid lines */
+        .crop-grid {
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.2) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+            background-size: 33.333% 33.333%;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col bg-zinc-950 text-zinc-100 overflow-hidden">
+
+    <!-- TOP TOOLBAR -->
+    <header class="h-14 border-b border-zinc-800/80 bg-zinc-900/90 backdrop-blur-md px-4 flex items-center justify-between shrink-0 z-30">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+            </div>
+            <span class="font-bold text-sm tracking-wide bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+                PhotoEnhance Pro
+            </span>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Open File -->
+            <label for="image-input" class="cursor-pointer px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 border border-zinc-700 transition flex items-center gap-1.5">
+                <i data-lucide="folder-open" class="w-3.5 h-3.5 text-blue-400"></i> Open Photo
+            </label>
+            <input type="file" id="image-input" accept="image/*" class="hidden">
+
+            <!-- Sample Photos Dropdown -->
+            <div class="relative group">
+                <button id="btn-sample-menu" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 border border-zinc-700 transition flex items-center gap-1.5">
+                    <i data-lucide="image" class="w-3.5 h-3.5 text-emerald-400"></i> Sample Photos <i data-lucide="chevron-down" class="w-3 h-3 text-zinc-400"></i>
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl py-1 hidden group-hover:block z-50">
+                    <button data-sample="sunset" class="btn-sample-item w-full px-3 py-2 text-left text-xs text-zinc-200 hover:bg-zinc-800 flex items-center gap-2 border-b border-zinc-800/60">
+                        <span>🌄 Sunset Mountain</span>
+                    </button>
+                    <button data-sample="portrait" class="btn-sample-item w-full px-3 py-2 text-left text-xs text-zinc-200 hover:bg-zinc-800 flex items-center gap-2 border-b border-zinc-800/60">
+                        <span>👤 Moody Portrait</span>
+                    </button>
+                    <button data-sample="neon" class="btn-sample-item w-full px-3 py-2 text-left text-xs text-zinc-200 hover:bg-zinc-800 flex items-center gap-2 border-b border-zinc-800/60">
+                        <span>🏙️ Neon City Street</span>
+                    </button>
+                    <button data-sample="forest" class="btn-sample-item w-full px-3 py-2 text-left text-xs text-zinc-200 hover:bg-zinc-800 flex items-center gap-2">
+                        <span>🌲 Emerald Forest</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="h-4 w-px bg-zinc-800 mx-1"></div>
+
+            <!-- Auto Enhance -->
+            <button id="btn-auto-enhance" class="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="wand-2" class="w-3.5 h-3.5 text-amber-400"></i> Auto Enhance
+            </button>
+
+            <!-- Reset All -->
+            <button id="btn-reset" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-300 border border-zinc-700 transition flex items-center gap-1.5">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-zinc-400"></i> Reset
+            </button>
+
+            <!-- Split View Toggle -->
+            <button id="btn-split-view" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-300 border border-zinc-700 transition flex items-center gap-1.5">
+                <i data-lucide="columns" class="w-3.5 h-3.5 text-indigo-400"></i> Compare
+            </button>
+        </div>
+
+        <div>
+            <!-- Export Button -->
+            <button id="btn-export" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white transition flex items-center gap-1.5 shadow-lg shadow-blue-600/30">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i> Export High-Res
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN STUDIO WORKSPACE -->
+    <div class="flex-1 flex overflow-hidden">
+
+        <!-- LEFT SIDEBAR: Presets Gallery -->
+        <aside class="w-64 border-r border-zinc-800/80 bg-zinc-900/40 flex flex-col shrink-0">
+            <div class="p-3 border-b border-zinc-800/80 flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                    <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-blue-400"></i> Preset Gallery
+                </span>
+                <span class="text-[10px] text-zinc-500">12 Presets</span>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-3 space-y-2.5" id="presets-list">
+                <!-- Presets injected dynamically via JavaScript -->
+            </div>
+        </aside>
+
+        <!-- CENTER VIEWPORT: Canvas Workspace -->
+        <main id="viewport-main" class="flex-1 bg-zinc-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+            
+            <!-- Canvas Wrapper -->
+            <div id="canvas-container" class="relative max-w-full max-h-full flex items-center justify-center shadow-2xl rounded-lg overflow-hidden border border-zinc-800/80">
+                <canvas id="main-canvas" class="max-w-full max-h-[calc(100vh-7rem)] object-contain block"></canvas>
+                
+                <!-- Interactive Crop Overlay -->
+                <div id="crop-overlay" class="absolute border-2 border-dashed border-blue-400 crop-grid hidden z-20 pointer-events-auto cursor-move">
+                    <div class="crop-handle absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white cursor-nwse-resize" data-handle="tl"></div>
+                    <div class="crop-handle absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white cursor-nesw-resize" data-handle="tr"></div>
+                    <div class="crop-handle absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white cursor-nesw-resize" data-handle="bl"></div>
+                    <div class="crop-handle absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white cursor-nwse-resize" data-handle="br"></div>
+                </div>
+
+                <!-- Split View Handle -->
+                <div id="split-divider" class="absolute top-0 bottom-0 w-0.5 bg-white cursor-ew-resize hidden z-10 shadow-[0_0_12px_rgba(0,0,0,0.9)]" style="left: 50%;">
+                    <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white text-zinc-900 flex items-center justify-center shadow-xl text-xs font-bold border border-zinc-300 pointer-events-none">
+                        <i data-lucide="split" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Toast -->
+            <div id="toast" class="absolute bottom-6 bg-zinc-900/95 border border-zinc-700 text-zinc-200 px-4 py-2 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2 translate-y-12 opacity-0 transition-all duration-300 z-40 pointer-events-none">
+                <i data-lucide="info" class="w-4 h-4 text-blue-400"></i>
+                <span id="toast-msg">Notification Message</span>
+            </div>
+        </main>
+
+        <!-- RIGHT SIDEBAR: Histogram, Crop, Curve, Sliders -->
+        <aside class="w-80 border-l border-zinc-800/80 bg-zinc-900/40 flex flex-col shrink-0">
+            
+            <!-- Histogram Area -->
+            <div class="p-3 border-b border-zinc-800/80 bg-zinc-900/60">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="activity" class="w-3.5 h-3.5 text-blue-400"></i> RGB Histogram
+                    </span>
+                </div>
+                <canvas id="histogram-canvas" class="w-full h-24 bg-zinc-950/80 rounded-lg border border-zinc-800/80 block"></canvas>
+            </div>
+
+            <!-- Control Tabs -->
+            <div class="flex border-b border-zinc-800 bg-zinc-900/80 p-1 gap-1">
+                <button data-tab="crop" class="tab-btn flex-1 py-1.5 text-xs font-medium rounded-md text-zinc-400 hover:text-zinc-200 transition text-center flex items-center justify-center gap-1">
+                    <i data-lucide="crop" class="w-3.5 h-3.5"></i> Crop
+                </button>
+                <button data-tab="curve" class="tab-btn flex-1 py-1.5 text-xs font-medium rounded-md text-zinc-400 hover:text-zinc-200 transition text-center flex items-center justify-center gap-1">
+                    <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> Curve
+                </button>
+                <button data-tab="adjust" class="tab-btn flex-1 py-1.5 text-xs font-medium rounded-md text-blue-400 bg-zinc-800 transition text-center flex items-center justify-center gap-1 active">
+                    <i data-lucide="sliders" class="w-3.5 h-3.5"></i> Adjust
+                </button>
+            </div>
+
+            <!-- TAB CONTENTS -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-5">
+                
+                <!-- TAB 1: CROP & TRANSFORM -->
+                <div id="tab-crop" class="tab-content space-y-4 hidden">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="crop" class="w-4 h-4 text-blue-400"></i> Crop & Rotate
+                        </span>
+                        <button id="btn-toggle-crop" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-[11px] font-semibold text-white transition">
+                            Enable Crop Grid
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[11px] font-medium text-zinc-400">Aspect Ratio</label>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button data-aspect="free" class="btn-aspect px-2 py-1.5 rounded bg-blue-600/30 text-blue-300 border border-blue-500/50 text-xs text-center font-medium">Free</button>
+                            <button data-aspect="1:1" class="btn-aspect px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">1:1 Square</button>
+                            <button data-aspect="4:3" class="btn-aspect px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">4:3 Standard</button>
+                            <button data-aspect="16:9" class="btn-aspect px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">16:9 Wide</button>
+                            <button data-aspect="9:16" class="btn-aspect px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">9:16 Story</button>
+                            <button data-aspect="3:2" class="btn-aspect px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">3:2 Classic</button>
+                        </div>
+                    </div>
+
+                    <button id="btn-apply-crop" class="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white shadow-md transition flex items-center justify-center gap-1.5">
+                        <i data-lucide="check" class="w-4 h-4"></i> Apply Selected Crop
+                    </button>
+
+                    <div class="space-y-2 pt-2 border-t border-zinc-800">
+                        <label class="text-[11px] font-medium text-zinc-400">Transform & Flip</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="btn-rotate-left" class="px-3 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 flex items-center justify-center gap-1.5">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Rotate 90° L
+                            </button>
+                            <button id="btn-rotate-right" class="px-3 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 flex items-center justify-center gap-1.5">
+                                <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> Rotate 90° R
+                            </button>
+                            <button id="btn-flip-h" class="px-3 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 flex items-center justify-center gap-1.5">
+                                <i data-lucide="flip-horizontal" class="w-3.5 h-3.5"></i> Flip Horiz
+                            </button>
+                            <button id="btn-flip-v" class="px-3 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 flex items-center justify-center gap-1.5">
+                                <i data-lucide="flip-vertical" class="w-3.5 h-3.5"></i> Flip Vert
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: TONE CURVE -->
+                <div id="tab-curve" class="tab-content space-y-4 hidden">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="trending-up" class="w-4 h-4 text-blue-400"></i> Tone Curve Editor
+                        </span>
+                    </div>
+
+                    <!-- Channel Buttons -->
+                    <div class="flex rounded-lg bg-zinc-900 p-1 border border-zinc-800 gap-1">
+                        <button data-channel="rgb" class="btn-channel flex-1 py-1 text-xs font-semibold rounded bg-zinc-700 text-white">RGB</button>
+                        <button data-channel="red" class="btn-channel flex-1 py-1 text-xs font-semibold rounded text-red-400 hover:bg-zinc-800">Red</button>
+                        <button data-channel="green" class="btn-channel flex-1 py-1 text-xs font-semibold rounded text-emerald-400 hover:bg-zinc-800">Green</button>
+                        <button data-channel="blue" class="btn-channel flex-1 py-1 text-xs font-semibold rounded text-blue-400 hover:bg-zinc-800">Blue</button>
+                    </div>
+
+                    <!-- Tone Curve Interactive Canvas -->
+                    <div class="relative bg-zinc-950 p-2 rounded-xl border border-zinc-800 shadow-inner">
+                        <canvas id="curve-canvas" width="250" height="250" class="w-full h-auto cursor-crosshair rounded block"></canvas>
+                    </div>
+                    <p class="text-[10px] text-zinc-500 text-center">Click curve to add point. Drag to adjust tones. Double click to delete point.</p>
+
+                    <div class="grid grid-cols-2 gap-2 pt-2">
+                        <button id="btn-curve-reset" class="px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 border border-zinc-700">Reset Curve</button>
+                        <button id="btn-curve-scurve" class="px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 border border-zinc-700">S-Curve Contrast</button>
+                    </div>
+                </div>
+
+                <!-- TAB 3: MANUAL ADJUSTMENT SLIDERS -->
+                <div id="tab-adjust" class="tab-content space-y-6">
+                    
+                    <!-- LIGHT SECTION -->
+                    <div class="space-y-3">
+                        <span class="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center justify-between border-b border-zinc-800 pb-1">
+                            <span class="flex items-center gap-1.5"><i data-lucide="sun" class="w-3.5 h-3.5 text-amber-400"></i> Light & Tone</span>
+                        </span>
+
+                        <!-- Exposure -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="text-zinc-400">Exposure</span>
+                                <span id="val-exposure" class="text-blue-400">0</span>
+                            </div>
+                            <input type="range" id="slider-exposure" min="-100" max="100" value="0">
+                        </div>
+
+                        <!-- Contrast -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="text-zinc-400">Contrast</span>
+                                <span id="val-contrast" class="text-blue-400">0</span>
+                            </div>
+                            <input type="range" id="slider-contrast" min="-100" max="100" value="0">
+                        </div>
+
+                        <!-- Highlights -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="text-zinc-400">Highlights</span>
+                                <span id="val-highlights" class="text-blue-400">0</span>
+                            </div>
+                            <input type="range" id="slider-highlights" min="-100" max="100" value="0">
+                        </div>
+
+                        <!-- Shadows -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="text-zinc-400">Shadows</span>
+                                <span id="val-shadows" class="text-blue-400">0</span>
+                            </div>
+                            <input type="range" id="slider-shadows" min="-100" max="100" value="0">
+                        </div>
+                    </div>
+
+                    <!-- COLOR SECTION -->
+                    <div class="space-y-3">
+                        <span class="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center justify-between border-b border-zinc-800 pb-1">
+                            <span class="flex items-center gap-1.5"><i data-lucide="palette" class="w-3.5 h-3.5 text-emerald-400"></i> Color</span>
+                        </span>
+
+                        <!-- Temperature -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="text-zinc-400">Temperature</span>
+                                <span id="val-temperature" class="text-blue-400">0</span>
+                            </div>
+                            <input type="range" id="slider-temperature" min="-100" max="100" value="0">
+                        </div>
+
+                        <!-- Saturation -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="text-zinc-400">Saturation</span>
+                                <span id="val-saturation" class="text-blue-400">0</span>
+                            </div>
+                            <input type="range" id="slider-saturation" min="-100" max="100" value="0">
+                        </div>
+
+                        <!-- Vibrance -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="text-zinc-400">Vibrance</span>
+                                <span id="val-vibrance" class="text-blue-400">0</span>
+                            </div>
+                            <input type="range" id="slider-vibrance" min="-100" max="100" value="0">
+                        </div>
+                    </div>
+
+                    <!-- EFFECTS & DETAIL SECTION -->
+                    <div class="space-y-3">
+                        <span class="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center justify-between border-b border-zinc-800 pb-1">
+                            <span class="flex items-center gap-1.5"><i data-lucide="sparkle" class="w-3.5 h-3.5 text-purple-400"></i> Effects & Detail</span>
+                        </span>
+
+                        <!-- Dehaze -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="text-zinc-400">Dehaze</span>
+                                <span id="val-dehaze" class="text-blue-400">0</span>
+                            </div>
+                            <input type="range" id="slider-dehaze" min="0" max="100" value="0">
+                        </div>
+
+                        <!-- Clarity -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="text-zinc-400">Clarity</span>
+                                <span id="val-clarity" class="text-blue-400">0</span>
+                            </div>
+                            <input type="range" id="slider-clarity" min="0" max="100" value="0">
+                        </div>
+
+                        <!-- Vignette -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="text-zinc-400">Vignette</span>
+                                <span id="val-vignette" class="text-blue-400">0</span>
+                            </div>
+                            <input type="range" id="slider-vignette" min="0" max="100" value="0">
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </aside>
+
+    </div>
+
+    <!-- JAVASCRIPT PROCESSING ENGINE -->
+    <script>
+        // Global Canvas Elements
+        const mainCanvas = document.getElementById('main-canvas');
+        const ctx = mainCanvas.getContext('2d', { willReadFrequently: true });
+        const histCanvas = document.getElementById('histogram-canvas');
+        const histCtx = histCanvas.getContext('2d');
+        const curveCanvas = document.getElementById('curve-canvas');
+        const curveCtx = curveCanvas.getContext('2d');
+
+        // State Variables
+        let originalImageData = null;
+        let originalImageObj = new Image();
+        let currentChannel = 'rgb';
+        let isSplitComparing = false;
+        let splitPosition = 0.5;
+
+        // Crop State & Interactive Dragging
+        let isCropEnabled = false;
+        let cropRect = { x: 0.1, y: 0.1, w: 0.8, h: 0.8 }; // Normalized 0..1
+        let isDraggingCrop = false;
+        let cropDragMode = null; // 'move', 'tl', 'tr', 'bl', 'br'
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let initialCropRect = { x: 0, y: 0, w: 0, h: 0 };
+
+        // Curve Points State (RGB, Red, Green, Blue)
+        const curvePoints = {
+            rgb: [{x: 0, y: 0}, {x: 255, y: 255}],
+            red: [{x: 0, y: 0}, {x: 255, y: 255}],
+            green: [{x: 0, y: 0}, {x: 255, y: 255}],
+            blue: [{x: 0, y: 0}, {x: 255, y: 255}]
+        };
+        let activePointIndex = -1;
+
+        // Adjustment Sliders Object
+        const adjustments = {
+            exposure: 0,
+            contrast: 0,
+            highlights: 0,
+            shadows: 0,
+            temperature: 0,
+            saturation: 0,
+            vibrance: 0,
+            dehaze: 0,
+            clarity: 0,
+            vignette: 0
+        };
+
+        // Presets Library Definition
+        const PRESETS = [
+            { id: 'natural', name: 'Natural Clean', settings: { exposure: 5, contrast: 10, highlights: -5, shadows: 10, temperature: 0, saturation: 5, vibrance: 10, dehaze: 0, clarity: 10, vignette: 0 } },
+            { id: 'cinematic', name: 'Cinematic', settings: { exposure: -5, contrast: 25, highlights: -25, shadows: 20, temperature: 10, saturation: -10, vibrance: 15, dehaze: 20, clarity: 20, vignette: -40 } },
+            { id: 'hdr', name: 'Vibrant HDR', settings: { exposure: 10, contrast: 25, highlights: -30, shadows: 35, temperature: 5, saturation: 30, vibrance: 35, dehaze: 15, clarity: 25, vignette: -10 } },
+            { id: 'dehaze', name: 'Dehaze & Punch', settings: { exposure: -5, contrast: 20, highlights: -15, shadows: 20, temperature: -5, saturation: 15, vibrance: 20, dehaze: 50, clarity: 30, vignette: -15 } },
+            { id: 'teal_orange', name: 'Teal & Orange', settings: { exposure: 0, contrast: 20, highlights: -10, shadows: 15, temperature: -15, saturation: 20, vibrance: 25, dehaze: 10, clarity: 15, vignette: -20 } },
+            { id: 'golden', name: 'Golden Hour', settings: { exposure: 10, contrast: 10, highlights: -10, shadows: 15, temperature: 35, saturation: 20, vibrance: 20, dehaze: 5, clarity: 10, vignette: -15 } },
+            { id: 'crisp', name: 'Crisp Detail', settings: { exposure: 5, contrast: 15, highlights: -20, shadows: 20, temperature: 0, saturation: 10, vibrance: 15, dehaze: 20, clarity: 50, vignette: 0 } },
+            { id: 'matte', name: 'Vintage Matte', settings: { exposure: 5, contrast: -15, highlights: -20, shadows: 30, temperature: 15, saturation: -15, vibrance: -10, dehaze: 0, clarity: -10, vignette: -30 } },
+            { id: 'bw', name: 'Dramatic B&W', settings: { exposure: 10, contrast: 40, highlights: -20, shadows: 25, temperature: 0, saturation: -100, vibrance: -100, dehaze: 25, clarity: 35, vignette: -35 } },
+            { id: 'cyberpunk', name: 'Cyberpunk Neon', settings: { exposure: 5, contrast: 30, highlights: -20, shadows: 30, temperature: -30, saturation: 45, vibrance: 50, dehaze: 20, clarity: 25, vignette: -25 } },
+            { id: 'moody', name: 'Moody Film', settings: { exposure: -10, contrast: 15, highlights: -35, shadows: 15, temperature: 10, saturation: -20, vibrance: -15, dehaze: 10, clarity: 15, vignette: -40 } },
+            { id: 'soft', name: 'Soft Portrait', settings: { exposure: 10, contrast: -10, highlights: -15, shadows: 15, temperature: 5, saturation: 5, vibrance: 10, dehaze: 0, clarity: -15, vignette: -10 } },
+            { id: 'urban', name: 'Urban Contrast', settings: { exposure: 0, contrast: 35, highlights: -25, shadows: 20, temperature: -10, saturation: 15, vibrance: 15, dehaze: 30, clarity: 35, vignette: -20 } }
+        ];
+
+        window.addEventListener('load', () => {
+            lucide.createIcons();
+            initPresetsUI();
+            setupUIControls();
+            setupCurveCanvas();
+            setupCropInteractions();
+            loadSampleImage('sunset');
+        });
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const msgSpan = document.getElementById('toast-msg');
+            msgSpan.textContent = message;
+            toast.classList.remove('translate-y-12', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-12', 'opacity-0');
+            }, 2500);
+        }
+
+        // Initialize Presets List Sidebar
+        function initPresetsUI() {
+            const list = document.getElementById('presets-list');
+            list.innerHTML = '';
+
+            PRESETS.forEach(preset => {
+                const btn = document.createElement('button');
+                btn.className = 'preset-card w-full p-2.5 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/50 hover:border-blue-500/50 transition flex items-center justify-between text-left group';
+                btn.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-7 h-7 rounded-lg bg-zinc-700 group-hover:bg-blue-600/20 text-zinc-300 group-hover:text-blue-400 flex items-center justify-center transition">
+                            <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-zinc-200 group-hover:text-white">${preset.name}</span>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300"></i>
+                `;
+                btn.addEventListener('click', () => applyPreset(preset));
+                list.appendChild(btn);
+            });
+            lucide.createIcons();
+        }
+
+        function applyPreset(preset) {
+            Object.assign(adjustments, preset.settings);
+            updateSliderUIValues();
+            renderImage();
+            showToast(`Applied Preset: ${preset.name}`);
+        }
+
+        function updateSliderUIValues() {
+            Object.keys(adjustments).forEach(key => {
+                const slider = document.getElementById(`slider-${key}`);
+                const valLabel = document.getElementById(`val-${key}`);
+                if (slider && valLabel) {
+                    slider.value = adjustments[key];
+                    valLabel.textContent = adjustments[key];
+                }
+            });
+        }
+
+        // Sample Photo Generator
+        function loadSampleImage(sampleType = 'sunset') {
+            const sampleCanvas = document.createElement('canvas');
+            sampleCanvas.width = 1200;
+            sampleCanvas.height = 800;
+            const sCtx = sampleCanvas.getContext('2d');
+
+            if (sampleType === 'sunset') {
+                const skyGrad = sCtx.createLinearGradient(0, 0, 0, 500);
+                skyGrad.addColorStop(0, '#0284c7');
+                skyGrad.addColorStop(0.5, '#38bdf8');
+                skyGrad.addColorStop(1, '#f97316');
+                sCtx.fillStyle = skyGrad;
+                sCtx.fillRect(0, 0, 1200, 800);
+
+                sCtx.beginPath();
+                sCtx.arc(600, 480, 130, 0, Math.PI * 2);
+                sCtx.fillStyle = '#fef08a';
+                sCtx.fill();
+
+                sCtx.fillStyle = '#0f172a';
+                sCtx.beginPath();
+                sCtx.moveTo(0, 800);
+                sCtx.lineTo(0, 560);
+                sCtx.lineTo(300, 420);
+                sCtx.lineTo(600, 590);
+                sCtx.lineTo(900, 390);
+                sCtx.lineTo(1200, 530);
+                sCtx.lineTo(1200, 800);
+                sCtx.closePath();
+                sCtx.fill();
+            } else if (sampleType === 'portrait') {
+                const bgGrad = sCtx.createRadialGradient(600, 400, 100, 600, 400, 700);
+                bgGrad.addColorStop(0, '#475569');
+                bgGrad.addColorStop(1, '#0f172a');
+                sCtx.fillStyle = bgGrad;
+                sCtx.fillRect(0, 0, 1200, 800);
+
+                sCtx.fillStyle = '#1e293b';
+                sCtx.beginPath();
+                sCtx.arc(600, 340, 150, 0, Math.PI * 2);
+                sCtx.fill();
+
+                sCtx.beginPath();
+                sCtx.ellipse(600, 750, 320, 280, 0, 0, Math.PI * 2);
+                sCtx.fill();
+
+                sCtx.strokeStyle = '#f59e0b';
+                sCtx.lineWidth = 12;
+                sCtx.beginPath();
+                sCtx.arc(600, 340, 152, -Math.PI * 0.7, Math.PI * 0.2);
+                sCtx.stroke();
+            } else if (sampleType === 'neon') {
+                sCtx.fillStyle = '#05050d';
+                sCtx.fillRect(0, 0, 1200, 800);
+
+                sCtx.fillStyle = '#0f172a';
+                sCtx.fillRect(100, 200, 180, 600);
+                sCtx.fillRect(320, 150, 220, 650);
+                sCtx.fillRect(580, 280, 200, 520);
+                sCtx.fillRect(820, 100, 250, 700);
+
+                const cyanGlow = sCtx.createRadialGradient(200, 300, 10, 200, 300, 300);
+                cyanGlow.addColorStop(0, 'rgba(6, 182, 212, 0.8)');
+                cyanGlow.addColorStop(1, 'transparent');
+                sCtx.fillStyle = cyanGlow;
+                sCtx.fillRect(0, 0, 1200, 800);
+
+                const pinkGlow = sCtx.createRadialGradient(900, 250, 10, 900, 250, 350);
+                pinkGlow.addColorStop(0, 'rgba(236, 72, 153, 0.8)');
+                pinkGlow.addColorStop(1, 'transparent');
+                sCtx.fillStyle = pinkGlow;
+                sCtx.fillRect(0, 0, 1200, 800);
+            } else if (sampleType === 'forest') {
+                const forestGrad = sCtx.createLinearGradient(0, 0, 0, 800);
+                forestGrad.addColorStop(0, '#064e3b');
+                forestGrad.addColorStop(0.5, '#047857');
+                forestGrad.addColorStop(1, '#022c22');
+                sCtx.fillStyle = forestGrad;
+                sCtx.fillRect(0, 0, 1200, 800);
+
+                sCtx.fillStyle = '#065f46';
+                for (let x = 80; x < 1200; x += 160) {
+                    sCtx.fillRect(x, 0, 45, 800);
+                }
+
+                const rayGrad = sCtx.createLinearGradient(0, 0, 1200, 800);
+                rayGrad.addColorStop(0, 'rgba(253, 224, 71, 0.35)');
+                rayGrad.addColorStop(1, 'transparent');
+                sCtx.fillStyle = rayGrad;
+                sCtx.fillRect(0, 0, 1200, 800);
+            }
+
+            originalImageObj.src = sampleCanvas.toDataURL();
+            originalImageObj.onload = () => {
+                mainCanvas.width = originalImageObj.width;
+                mainCanvas.height = originalImageObj.height;
+                ctx.drawImage(originalImageObj, 0, 0);
+                originalImageData = ctx.getImageData(0, 0, mainCanvas.width, mainCanvas.height);
+                drawHistogram();
+                drawCurveCanvas();
+                renderImage();
+                updateCropOverlayPosition();
+                showToast(`Loaded Sample: ${sampleType.toUpperCase()}`);
+            };
+        }
+
+        function renderImage() {
+            if (!originalImageData) return;
+
+            const w = mainCanvas.width;
+            const h = mainCanvas.height;
+            const outputData = ctx.createImageData(w, h);
+            const src = originalImageData.data;
+            const dst = outputData.data;
+
+            const lutRGB = getCurveLUT('rgb');
+            const lutRed = getCurveLUT('red');
+            const lutGreen = getCurveLUT('green');
+            const lutBlue = getCurveLUT('blue');
+
+            const expFactor = Math.pow(2, adjustments.exposure / 50);
+            const contrastFactor = (adjustments.contrast + 100) / 100;
+            const satFactor = (adjustments.saturation + 100) / 100;
+            const tempShift = adjustments.temperature * 0.5;
+            const highlightFactor = adjustments.highlights / 100;
+            const shadowFactor = adjustments.shadows / 100;
+            const dehazeFactor = adjustments.dehaze / 100;
+
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
+
+            for (let i = 0; i < src.length; i += 4) {
+                let r = src[i];
+                let g = src[i + 1];
+                let b = src[i + 2];
+
+                r += tempShift;
+                b -= tempShift;
+
+                r = ((r * expFactor - 128) * contrastFactor) + 128;
+                g = ((g * expFactor - 128) * contrastFactor) + 128;
+                b = ((b * expFactor - 128) * contrastFactor) + 128;
+
+                let lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                if (lum > 128) {
+                    const hWeight = (lum - 128) / 127;
+                    r += highlightFactor * 30 * hWeight;
+                    g += highlightFactor * 30 * hWeight;
+                    b += highlightFactor * 30 * hWeight;
+                } else {
+                    const sWeight = (128 - lum) / 128;
+                    r += shadowFactor * 30 * sWeight;
+                    g += shadowFactor * 30 * sWeight;
+                    b += shadowFactor * 30 * sWeight;
+                }
+
+                if (dehazeFactor > 0) {
+                    const minRGB = Math.min(r, g, b);
+                    r = (r - minRGB * dehazeFactor * 0.4) * (1 + dehazeFactor * 0.2);
+                    g = (g - minRGB * dehazeFactor * 0.4) * (1 + dehazeFactor * 0.2);
+                    b = (b - minRGB * dehazeFactor * 0.4) * (1 + dehazeFactor * 0.2);
+                }
+
+                lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                r = lum + (r - lum) * satFactor;
+                g = lum + (g - lum) * satFactor;
+                b = lum + (b - lum) * satFactor;
+
+                r = Math.max(0, Math.min(255, r));
+                g = Math.max(0, Math.min(255, g));
+                b = Math.max(0, Math.min(255, b));
+
+                r = lutRed[lutRGB[Math.round(r)]];
+                g = lutGreen[lutRGB[Math.round(g)]];
+                b = lutBlue[lutRGB[Math.round(b)]];
+
+                if (adjustments.vignette !== 0) {
+                    const pixelX = (i / 4) % w;
+                    const pixelY = Math.floor((i / 4) / w);
+                    const dist = Math.sqrt((pixelX - centerX) ** 2 + (pixelY - centerY) ** 2);
+                    const vNorm = dist / maxRadius;
+                    const vFactor = 1 + (adjustments.vignette / 100) * (vNorm ** 2);
+                    r *= vFactor;
+                    g *= vFactor;
+                    b *= vFactor;
+                }
+
+                dst[i] = Math.max(0, Math.min(255, r));
+                dst[i + 1] = Math.max(0, Math.min(255, g));
+                dst[i + 2] = Math.max(0, Math.min(255, b));
+                dst[i + 3] = src[i + 3];
+            }
+
+            ctx.putImageData(outputData, 0, 0);
+
+            if (isSplitComparing) {
+                const splitX = Math.round(w * splitPosition);
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(0, 0, splitX, h);
+                ctx.clip();
+                ctx.putImageData(originalImageData, 0, 0);
+                ctx.restore();
+            }
+
+            drawHistogram();
+        }
+
+        function getCurveLUT(channel) {
+            const pts = curvePoints[channel].slice().sort((a, b) => a.x - b.x);
+            const lut = new Uint8Array(256);
+
+            for (let i = 0; i < 256; i++) {
+                if (i <= pts[0].x) {
+                    lut[i] = Math.max(0, Math.min(255, pts[0].y));
+                } else if (i >= pts[pts.length - 1].x) {
+                    lut[i] = Math.max(0, Math.min(255, pts[pts.length - 1].y));
+                } else {
+                    for (let j = 0; j < pts.length - 1; j++) {
+                        if (i >= pts[j].x && i <= pts[j + 1].x) {
+                            const t = (i - pts[j].x) / (pts[j + 1].x - pts[j].x);
+                            const val = pts[j].y + t * (pts[j + 1].y - pts[j].y);
+                            lut[i] = Math.max(0, Math.min(255, Math.round(val)));
+                            break;
+                        }
+                    }
+                }
+            }
+            return lut;
+        }
+
+        function setupCurveCanvas() {
+            drawCurveCanvas();
+
+            curveCanvas.addEventListener('mousedown', (e) => {
+                const rect = curveCanvas.getBoundingClientRect();
+                const mx = ((e.clientX - rect.left) / rect.width) * 255;
+                const my = (1 - (e.clientY - rect.top) / rect.height) * 255;
+
+                const pts = curvePoints[currentChannel];
+                activePointIndex = pts.findIndex(p => Math.hypot(p.x - mx, p.y - my) < 20);
+
+                if (activePointIndex === -1) {
+                    pts.push({ x: mx, y: my });
+                    pts.sort((a, b) => a.x - b.x);
+                    activePointIndex = pts.findIndex(p => Math.abs(p.x - mx) < 2);
+                }
+                drawCurveCanvas();
+                renderImage();
+            });
+
+            curveCanvas.addEventListener('mousemove', (e) => {
+                if (activePointIndex === -1) return;
+                const rect = curveCanvas.getBoundingClientRect();
+                let mx = Math.max(0, Math.min(255, ((e.clientX - rect.left) / rect.width) * 255));
+                let my = Math.max(0, Math.min(255, (1 - (e.clientY - rect.top) / rect.height) * 255));
+
+                const pts = curvePoints[currentChannel];
+                pts[activePointIndex].x = mx;
+                pts[activePointIndex].y = my;
+                pts.sort((a, b) => a.x - b.x);
+                drawCurveCanvas();
+                renderImage();
+            });
+
+            window.addEventListener('mouseup', () => { activePointIndex = -1; });
+
+            curveCanvas.addEventListener('dblclick', (e) => {
+                const rect = curveCanvas.getBoundingClientRect();
+                const mx = ((e.clientX - rect.left) / rect.width) * 255;
+                const my = (1 - (e.clientY - rect.top) / rect.height) * 255;
+
+                const pts = curvePoints[currentChannel];
+                if (pts.length > 2) {
+                    const idx = pts.findIndex(p => Math.hypot(p.x - mx, p.y - my) < 20);
+                    if (idx !== -1) {
+                        pts.splice(idx, 1);
+                        drawCurveCanvas();
+                        renderImage();
+                    }
+                }
+            });
+        }
+
+        function drawCurveCanvas() {
+            const w = curveCanvas.width;
+            const h = curveCanvas.height;
+            curveCtx.clearRect(0, 0, w, h);
+
+            curveCtx.strokeStyle = '#27272a';
+            curveCtx.lineWidth = 1;
+            for (let i = 1; i < 4; i++) {
+                curveCtx.beginPath();
+                curveCtx.moveTo((w / 4) * i, 0);
+                curveCtx.lineTo((w / 4) * i, h);
+                curveCtx.stroke();
+
+                curveCtx.beginPath();
+                curveCtx.moveTo(0, (h / 4) * i);
+                curveCtx.lineTo(w, (h / 4) * i);
+                curveCtx.stroke();
+            }
+
+            curveCtx.strokeStyle = '#3f3f46';
+            curveCtx.beginPath();
+            curveCtx.moveTo(0, h);
+            curveCtx.lineTo(w, 0);
+            curveCtx.stroke();
+
+            const lut = getCurveLUT(currentChannel);
+            curveCtx.strokeStyle = currentChannel === 'red' ? '#ef4444' : currentChannel === 'green' ? '#10b981' : currentChannel === 'blue' ? '#3b82f6' : '#ffffff';
+            curveCtx.lineWidth = 2.5;
+            curveCtx.beginPath();
+
+            for (let x = 0; x < 256; x++) {
+                const cx = (x / 255) * w;
+                const cy = h - (lut[x] / 255) * h;
+                if (x === 0) curveCtx.moveTo(cx, cy);
+                else curveCtx.lineTo(cx, cy);
+            }
+            curveCtx.stroke();
+
+            const pts = curvePoints[currentChannel];
+            pts.forEach(p => {
+                const px = (p.x / 255) * w;
+                const py = h - (p.y / 255) * h;
+
+                curveCtx.fillStyle = '#3b82f6';
+                curveCtx.beginPath();
+                curveCtx.arc(px, py, 5, 0, Math.PI * 2);
+                curveCtx.fill();
+
+                curveCtx.strokeStyle = '#ffffff';
+                curveCtx.lineWidth = 2;
+                curveCtx.stroke();
+            });
+        }
+
+        function drawHistogram() {
+            const imgData = ctx.getImageData(0, 0, mainCanvas.width, mainCanvas.height).data;
+            const rHist = new Array(256).fill(0);
+            const gHist = new Array(256).fill(0);
+            const bHist = new Array(256).fill(0);
+
+            for (let i = 0; i < imgData.length; i += 16) {
+                rHist[imgData[i]]++;
+                gHist[imgData[i + 1]]++;
+                bHist[imgData[i + 2]]++;
+            }
+
+            const maxCount = Math.max(...rHist, ...gHist, ...bHist) || 1;
+            const hw = histCanvas.width;
+            const hh = histCanvas.height;
+
+            histCtx.clearRect(0, 0, hw, hh);
+            histCtx.globalCompositeOperation = 'screen';
+
+            const drawChannel = (data, color) => {
+                histCtx.fillStyle = color;
+                histCtx.beginPath();
+                histCtx.moveTo(0, hh);
+                for (let i = 0; i < 256; i++) {
+                    const x = (i / 255) * hw;
+                    const y = hh - (data[i] / maxCount) * hh;
+                    histCtx.lineTo(x, y);
+                }
+                histCtx.lineTo(hw, hh);
+                histCtx.closePath();
+                histCtx.fill();
+            };
+
+            drawChannel(rHist, 'rgba(239, 68, 68, 0.4)');
+            drawChannel(gHist, 'rgba(16, 185, 129, 0.4)');
+            drawChannel(bHist, 'rgba(59, 130, 246, 0.4)');
+            histCtx.globalCompositeOperation = 'source-over';
+        }
+
+        function autoEnhance() {
+            if (!originalImageData) return;
+            const data = originalImageData.data;
+            let sumL = 0;
+
+            for (let i = 0; i < data.length; i += 16) {
+                sumL += (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+            }
+            const avgL = sumL / (data.length / 16);
+
+            adjustments.exposure = Math.round((128 - avgL) * 0.35);
+            adjustments.contrast = 15;
+            adjustments.highlights = -15;
+            adjustments.shadows = 20;
+            adjustments.saturation = 10;
+            adjustments.vibrance = 15;
+            adjustments.clarity = 10;
+
+            updateSliderUIValues();
+            renderImage();
+            showToast('Auto Enhancement Applied');
+        }
+
+        // Fully Interactive Manual Crop Dragging Engine
+        function updateCropOverlayPosition() {
+            const overlay = document.getElementById('crop-overlay');
+            if (!isCropEnabled) {
+                overlay.classList.add('hidden');
+                return;
+            }
+            overlay.classList.remove('hidden');
+
+            const cW = mainCanvas.clientWidth;
+            const cH = mainCanvas.clientHeight;
+
+            overlay.style.left = `${cropRect.x * cW}px`;
+            overlay.style.top = `${cropRect.y * cH}px`;
+            overlay.style.width = `${cropRect.w * cW}px`;
+            overlay.style.height = `${cropRect.h * cH}px`;
+        }
+
+        function setupCropInteractions() {
+            const overlay = document.getElementById('crop-overlay');
+
+            overlay.addEventListener('mousedown', (e) => {
+                if (!isCropEnabled) return;
+                isDraggingCrop = true;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                initialCropRect = { ...cropRect };
+
+                const handle = e.target.dataset.handle;
+                cropDragMode = handle ? handle : 'move';
+                e.stopPropagation();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDraggingCrop || !isCropEnabled) return;
+
+                const cW = mainCanvas.clientWidth;
+                const cH = mainCanvas.clientHeight;
+                const dx = (e.clientX - dragStartX) / cW;
+                const dy = (e.clientY - cH) / cH ? (e.clientY - dragStartY) / cH : 0; // Fixed calculation
+
+                if (cropDragMode === 'move') {
+                    cropRect.x = Math.max(0, Math.min(1 - cropRect.w, initialCropRect.x + dx));
+                    cropRect.y = Math.max(0, Math.min(1 - cropRect.h, initialCropRect.y + (e.clientY - dragStartY) / cH));
+                } else if (cropDragMode === 'tl') {
+                    const newX = Math.max(0, Math.min(initialCropRect.x + initialCropRect.w - 0.05, initialCropRect.x + dx));
+                    const newY = Math.max(0, Math.min(initialCropRect.y + initialCropRect.h - 0.05, initialCropRect.y + (e.clientY - dragStartY) / cH));
+                    cropRect.w = initialCropRect.w + (initialCropRect.x - newX);
+                    cropRect.h = initialCropRect.h + (initialCropRect.y - newY);
+                    cropRect.x = newX;
+                    cropRect.y = newY;
+                } else if (cropDragMode === 'tr') {
+                    const newW = Math.max(0.05, Math.min(1 - initialCropRect.x, initialCropRect.w + dx));
+                    const newY = Math.max(0, Math.min(initialCropRect.y + initialCropRect.h - 0.05, initialCropRect.y + (e.clientY - dragStartY) / cH));
+                    cropRect.w = newW;
+                    cropRect.h = initialCropRect.h + (initialCropRect.y - newY);
+                    cropRect.y = newY;
+                } else if (cropDragMode === 'bl') {
+                    const newX = Math.max(0, Math.min(initialCropRect.x + initialCropRect.w - 0.05, initialCropRect.x + dx));
+                    const newH = Math.max(0.05, Math.min(1 - initialCropRect.y, initialCropRect.h + (e.clientY - dragStartY) / cH));
+                    cropRect.w = initialCropRect.w + (initialCropRect.x - newX);
+                    cropRect.h = newH;
+                    cropRect.x = newX;
+                } else if (cropDragMode === 'br') {
+                    cropRect.w = Math.max(0.05, Math.min(1 - initialCropRect.x, initialCropRect.w + dx));
+                    cropRect.h = Math.max(0.05, Math.min(1 - initialCropRect.y, initialCropRect.h + (e.clientY - dragStartY) / cH));
+                }
+
+                updateCropOverlayPosition();
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDraggingCrop = false;
+            });
+        }
+
+        function applyCrop() {
+            if (!originalImageData) return;
+
+            const x = Math.round(cropRect.x * mainCanvas.width);
+            const y = Math.round(cropRect.y * mainCanvas.height);
+            const w = Math.round(cropRect.w * mainCanvas.width);
+            const h = Math.round(cropRect.h * mainCanvas.height);
+
+            if (w < 20 || h < 20) return;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = w;
+            tempCanvas.height = h;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            tempCtx.putImageData(originalImageData, -x, -y);
+
+            mainCanvas.width = w;
+            mainCanvas.height = h;
+            ctx.drawImage(tempCanvas, 0, 0);
+            originalImageData = ctx.getImageData(0, 0, w, h);
+
+            cropRect = { x: 0.1, y: 0.1, w: 0.8, h: 0.8 };
+            isCropEnabled = false;
+            document.getElementById('btn-toggle-crop').textContent = 'Enable Crop Grid';
+            updateCropOverlayPosition();
+
+            drawHistogram();
+            renderImage();
+            showToast('Image Cropped Successfully');
+        }
+
+        function rotateImage(deg) {
+            if (!originalImageData) return;
+
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+
+            if (deg === 90 || deg === -90) {
+                tempCanvas.width = mainCanvas.height;
+                tempCanvas.height = mainCanvas.width;
+            } else {
+                tempCanvas.width = mainCanvas.width;
+                tempCanvas.height = mainCanvas.height;
+            }
+
+            tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
+            tempCtx.rotate((deg * Math.PI) / 180);
+
+            const srcCanvas = document.createElement('canvas');
+            srcCanvas.width = mainCanvas.width;
+            srcCanvas.height = mainCanvas.height;
+            srcCanvas.getContext('2d').putImageData(originalImageData, 0, 0);
+
+            tempCtx.drawImage(srcCanvas, -mainCanvas.width / 2, -mainCanvas.height / 2);
+
+            mainCanvas.width = tempCanvas.width;
+            mainCanvas.height = tempCanvas.height;
+            originalImageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+
+            drawHistogram();
+            renderImage();
+            updateCropOverlayPosition();
+            showToast(`Rotated ${deg}°`);
+        }
+
+        function flipImage(horizontal) {
+            if (!originalImageData) return;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = mainCanvas.width;
+            tempCanvas.height = mainCanvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            tempCtx.translate(horizontal ? mainCanvas.width : 0, horizontal ? 0 : mainCanvas.height);
+            tempCtx.scale(horizontal ? -1 : 1, horizontal ? 1 : -1);
+
+            const srcCanvas = document.createElement('canvas');
+            srcCanvas.width = mainCanvas.width;
+            srcCanvas.height = mainCanvas.height;
+            srcCanvas.getContext('2d').putImageData(originalImageData, 0, 0);
+
+            tempCtx.drawImage(srcCanvas, 0, 0);
+            originalImageData = tempCtx.getImageData(0, 0, mainCanvas.width, mainCanvas.height);
+
+            drawHistogram();
+            renderImage();
+            showToast(horizontal ? 'Flipped Horizontally' : 'Flipped Vertically');
+        }
+
+        function setupUIControls() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => {
+                        b.classList.remove('text-blue-400', 'bg-zinc-800');
+                        b.classList.add('text-zinc-400');
+                    });
+                    btn.classList.add('text-blue-400', 'bg-zinc-800');
+
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                    const targetTab = document.getElementById(`tab-${btn.dataset.tab}`);
+                    if (targetTab) targetTab.classList.remove('hidden');
+                });
+            });
+
+            Object.keys(adjustments).forEach(key => {
+                const slider = document.getElementById(`slider-${key}`);
+                const valLabel = document.getElementById(`val-${key}`);
+                if (slider) {
+                    slider.addEventListener('input', (e) => {
+                        adjustments[key] = parseInt(e.target.value);
+                        if (valLabel) valLabel.textContent = adjustments[key];
+                        renderImage();
+                    });
+                }
+            });
+
+            document.querySelectorAll('.btn-channel').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.btn-channel').forEach(b => b.classList.remove('bg-zinc-700', 'text-white'));
+                    btn.classList.add('bg-zinc-700', 'text-white');
+                    currentChannel = btn.dataset.channel;
+                    drawCurveCanvas();
+                });
+            });
+
+            document.getElementById('btn-curve-reset').addEventListener('click', () => {
+                curvePoints[currentChannel] = [{x: 0, y: 0}, {x: 255, y: 255}];
+                drawCurveCanvas();
+                renderImage();
+            });
+
+            document.getElementById('btn-curve-scurve').addEventListener('click', () => {
+                curvePoints[currentChannel] = [{x: 0, y: 0}, {x: 64, y: 45}, {x: 192, y: 210}, {x: 255, y: 255}];
+                drawCurveCanvas();
+                renderImage();
+            });
+
+            document.getElementById('image-input').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        originalImageObj.src = event.target.result;
+                        originalImageObj.onload = () => {
+                            mainCanvas.width = originalImageObj.width;
+                            mainCanvas.height = originalImageObj.height;
+                            ctx.drawImage(originalImageObj, 0, 0);
+                            originalImageData = ctx.getImageData(0, 0, mainCanvas.width, mainCanvas.height);
+                            drawHistogram();
+                            drawCurveCanvas();
+                            renderImage();
+                            showToast('Opened Photo');
+                        };
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            document.querySelectorAll('.btn-sample-item').forEach(btn => {
+                btn.addEventListener('click', () => loadSampleImage(btn.dataset.sample));
+            });
+
+            document.getElementById('btn-auto-enhance').addEventListener('click', autoEnhance);
+
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                Object.keys(adjustments).forEach(k => adjustments[k] = 0);
+                Object.keys(curvePoints).forEach(k => curvePoints[k] = [{x: 0, y: 0}, {x: 255, y: 255}]);
+                updateSliderUIValues();
+                drawCurveCanvas();
+                renderImage();
+                showToast('Reset All Adjustments');
+            });
+
+            document.getElementById('btn-split-view').addEventListener('click', () => {
+                isSplitComparing = !isSplitComparing;
+                const divider = document.getElementById('split-divider');
+                divider.classList.toggle('hidden', !isSplitComparing);
+                renderImage();
+                showToast(isSplitComparing ? 'Split View Enabled (Drag divider)' : 'Split View Disabled');
+            });
+
+            // Interactive dragging for Split View Divider
+            let isDraggingSplit = false;
+            const container = document.getElementById('canvas-container');
+            const divider = document.getElementById('split-divider');
+
+            divider.addEventListener('mousedown', (e) => {
+                if (!isSplitComparing) return;
+                isDraggingSplit = true;
+                e.stopPropagation();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDraggingSplit || !isSplitComparing) return;
+                const rect = mainCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                splitPosition = Math.max(0, Math.min(1, x / rect.width));
+                divider.style.left = `${splitPosition * 100}%`;
+                renderImage();
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDraggingSplit = false;
+            });
+
+            document.getElementById('btn-export').addEventListener('click', () => {
+                mainCanvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = 'PhotoEnhance_Pro_Export.png';
+                    link.href = url;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    showToast('Exported High-Res Image');
+                }, 'image/png', 0.95);
+            });
+
+            document.getElementById('btn-toggle-crop').addEventListener('click', () => {
+                isCropEnabled = !isCropEnabled;
+                const btn = document.getElementById('btn-toggle-crop');
+                btn.textContent = isCropEnabled ? 'Disable Crop Grid' : 'Enable Crop Grid';
+                updateCropOverlayPosition();
+            });
+
+            document.getElementById('btn-apply-crop').addEventListener('click', applyCrop);
+            document.getElementById('btn-rotate-left').addEventListener('click', () => rotateImage(-90));
+            document.getElementById('btn-rotate-right').addEventListener('click', () => rotateImage(90));
+            document.getElementById('btn-flip-h').addEventListener('click', () => flipImage(true));
+            document.getElementById('btn-flip-v').addEventListener('click', () => flipImage(false));
+
+            window.addEventListener('resize', updateCropOverlayPosition);
+        }
+    </script>
+</body>
+</html>
