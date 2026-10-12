@@ -2,7 +2,7 @@
 <html lang="en" class="h-full bg-zinc-950 text-zinc-100 dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PhotoEnhance Pro</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -10,9 +10,14 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; user-select: none; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
         
-        /* Custom scrollbar */
+        /* Custom scrollbars */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #09090b; }
         ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
@@ -26,20 +31,20 @@
         input[type=range]:focus { outline: none; }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
-            height: 4px;
+            height: 6px;
             cursor: pointer;
             background: #27272a;
-            border-radius: 2px;
+            border-radius: 3px;
         }
         input[type=range]::-webkit-slider-thumb {
-            height: 14px;
-            width: 14px;
+            height: 18px;
+            width: 18px;
             border-radius: 50%;
             background: #3b82f6;
             cursor: pointer;
             -webkit-appearance: none;
-            margin-top: -5px;
-            box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
             transition: transform 0.1s ease;
         }
         input[type=range]::-webkit-slider-thumb:hover {
@@ -50,36 +55,39 @@
         /* Crop Overlay grid lines */
         .crop-grid {
             background-image: 
-                linear-gradient(to right, rgba(255, 255, 255, 0.2) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+                linear-gradient(to right, rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
             background-size: 33.333% 33.333%;
         }
+
+        /* Touch optimization helper */
+        .touch-none { touch-action: none; }
     </style>
 </head>
 <body class="h-full flex flex-col bg-zinc-950 text-zinc-100 overflow-hidden">
 
     <!-- TOP TOOLBAR -->
-    <header class="h-14 border-b border-zinc-800/80 bg-zinc-900/90 backdrop-blur-md px-4 flex items-center justify-between shrink-0 z-30">
-        <div class="flex items-center gap-3">
+    <header class="h-14 border-b border-zinc-800/80 bg-zinc-900/90 backdrop-blur-md px-3 sm:px-4 flex items-center justify-between shrink-0 z-30 gap-2 overflow-x-auto">
+        <div class="flex items-center gap-2.5 shrink-0">
             <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
             </div>
-            <span class="font-bold text-sm tracking-wide bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+            <span class="font-bold text-xs sm:text-sm tracking-wide bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent hidden sm:inline">
                 PhotoEnhance Pro
             </span>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <!-- Open File -->
-            <label for="image-input" class="cursor-pointer px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 border border-zinc-700 transition flex items-center gap-1.5">
-                <i data-lucide="folder-open" class="w-3.5 h-3.5 text-blue-400"></i> Open Photo
+            <label for="image-input" class="cursor-pointer px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 border border-zinc-700 transition flex items-center gap-1.5">
+                <i data-lucide="folder-open" class="w-3.5 h-3.5 text-blue-400"></i> <span class="hidden sm:inline">Open</span>
             </label>
             <input type="file" id="image-input" accept="image/*" class="hidden">
 
             <!-- Sample Photos Dropdown -->
             <div class="relative group">
-                <button id="btn-sample-menu" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 border border-zinc-700 transition flex items-center gap-1.5">
-                    <i data-lucide="image" class="w-3.5 h-3.5 text-emerald-400"></i> Sample Photos <i data-lucide="chevron-down" class="w-3 h-3 text-zinc-400"></i>
+                <button id="btn-sample-menu" class="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 border border-zinc-700 transition flex items-center gap-1.5">
+                    <i data-lucide="image" class="w-3.5 h-3.5 text-emerald-400"></i> <span class="hidden sm:inline">Samples</span> <i data-lucide="chevron-down" class="w-3 h-3 text-zinc-400"></i>
                 </button>
                 <div class="absolute top-full left-0 mt-1 w-48 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl py-1 hidden group-hover:block z-50">
                     <button data-sample="sunset" class="btn-sample-item w-full px-3 py-2 text-left text-xs text-zinc-200 hover:bg-zinc-800 flex items-center gap-2 border-b border-zinc-800/60">
@@ -97,42 +105,42 @@
                 </div>
             </div>
 
-            <div class="h-4 w-px bg-zinc-800 mx-1"></div>
+            <div class="h-4 w-px bg-zinc-800 mx-0.5 hidden sm:block"></div>
 
             <!-- Auto Enhance -->
-            <button id="btn-auto-enhance" class="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                <i data-lucide="wand-2" class="w-3.5 h-3.5 text-amber-400"></i> Auto Enhance
+            <button id="btn-auto-enhance" class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="wand-2" class="w-3.5 h-3.5 text-amber-400"></i> <span class="hidden sm:inline">Auto</span>
             </button>
 
             <!-- Reset All -->
-            <button id="btn-reset" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-300 border border-zinc-700 transition flex items-center gap-1.5">
-                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-zinc-400"></i> Reset
+            <button id="btn-reset" class="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-300 border border-zinc-700 transition flex items-center gap-1.5">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-zinc-400"></i> <span class="hidden sm:inline">Reset</span>
             </button>
 
             <!-- Split View Toggle -->
-            <button id="btn-split-view" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-300 border border-zinc-700 transition flex items-center gap-1.5">
-                <i data-lucide="columns" class="w-3.5 h-3.5 text-indigo-400"></i> Compare
+            <button id="btn-split-view" class="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-300 border border-zinc-700 transition flex items-center gap-1.5">
+                <i data-lucide="columns" class="w-3.5 h-3.5 text-indigo-400"></i> <span class="hidden sm:inline">Compare</span>
             </button>
         </div>
 
-        <div>
+        <div class="shrink-0">
             <!-- Export Button -->
-            <button id="btn-export" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white transition flex items-center gap-1.5 shadow-lg shadow-blue-600/30">
-                <i data-lucide="download" class="w-3.5 h-3.5"></i> Export High-Res
+            <button id="btn-export" class="px-3 sm:px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white transition flex items-center gap-1.5 shadow-lg shadow-blue-600/30">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Export</span>
             </button>
         </div>
     </header>
 
     <!-- MAIN STUDIO WORKSPACE -->
-    <div class="flex-1 flex overflow-hidden">
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
 
         <!-- LEFT SIDEBAR: Presets Gallery -->
-        <aside class="w-64 border-r border-zinc-800/80 bg-zinc-900/40 flex flex-col shrink-0">
+        <aside id="panel-presets" class="w-full lg:w-64 border-r border-zinc-800/80 bg-zinc-900/40 flex flex-col shrink-0 hidden lg:flex h-full overflow-hidden">
             <div class="p-3 border-b border-zinc-800/80 flex items-center justify-between">
                 <span class="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
                     <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-blue-400"></i> Preset Gallery
                 </span>
-                <span class="text-[10px] text-zinc-500">12 Presets</span>
+                <span class="text-[10px] text-zinc-500">13 Presets</span>
             </div>
             
             <div class="flex-1 overflow-y-auto p-3 space-y-2.5" id="presets-list">
@@ -141,22 +149,22 @@
         </aside>
 
         <!-- CENTER VIEWPORT: Canvas Workspace -->
-        <main id="viewport-main" class="flex-1 bg-zinc-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <main id="panel-viewport" class="flex-1 bg-zinc-950 flex flex-col items-center justify-center p-2 sm:p-4 relative overflow-hidden h-full">
             
             <!-- Canvas Wrapper -->
-            <div id="canvas-container" class="relative max-w-full max-h-full flex items-center justify-center shadow-2xl rounded-lg overflow-hidden border border-zinc-800/80">
-                <canvas id="main-canvas" class="max-w-full max-h-[calc(100vh-7rem)] object-contain block"></canvas>
+            <div id="canvas-container" class="relative max-w-full max-h-full flex items-center justify-center shadow-2xl rounded-lg overflow-hidden border border-zinc-800/80 touch-none">
+                <canvas id="main-canvas" class="max-w-full max-h-[calc(100vh-10rem)] lg:max-h-[calc(100vh-7rem)] object-contain block"></canvas>
                 
                 <!-- Interactive Crop Overlay -->
-                <div id="crop-overlay" class="absolute border-2 border-dashed border-blue-400 crop-grid hidden z-20 pointer-events-auto cursor-move">
-                    <div class="crop-handle absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white cursor-nwse-resize" data-handle="tl"></div>
-                    <div class="crop-handle absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white cursor-nesw-resize" data-handle="tr"></div>
-                    <div class="crop-handle absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white cursor-nesw-resize" data-handle="bl"></div>
-                    <div class="crop-handle absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white cursor-nwse-resize" data-handle="br"></div>
+                <div id="crop-overlay" class="absolute border-2 border-dashed border-blue-400 crop-grid hidden z-20 pointer-events-auto cursor-move touch-none">
+                    <div class="crop-handle absolute -top-3 -left-3 w-6 h-6 sm:w-4 sm:h-4 bg-blue-500 rounded-full border-2 border-white cursor-nwse-resize" data-handle="tl"></div>
+                    <div class="crop-handle absolute -top-3 -right-3 w-6 h-6 sm:w-4 sm:h-4 bg-blue-500 rounded-full border-2 border-white cursor-nesw-resize" data-handle="tr"></div>
+                    <div class="crop-handle absolute -bottom-3 -left-3 w-6 h-6 sm:w-4 sm:h-4 bg-blue-500 rounded-full border-2 border-white cursor-nesw-resize" data-handle="bl"></div>
+                    <div class="crop-handle absolute -bottom-3 -right-3 w-6 h-6 sm:w-4 sm:h-4 bg-blue-500 rounded-full border-2 border-white cursor-nwse-resize" data-handle="br"></div>
                 </div>
 
                 <!-- Split View Handle -->
-                <div id="split-divider" class="absolute top-0 bottom-0 w-0.5 bg-white cursor-ew-resize hidden z-10 shadow-[0_0_12px_rgba(0,0,0,0.9)]" style="left: 50%;">
+                <div id="split-divider" class="absolute top-0 bottom-0 w-1 bg-white cursor-ew-resize hidden z-10 shadow-[0_0_12px_rgba(0,0,0,0.9)] touch-none" style="left: 50%;">
                     <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white text-zinc-900 flex items-center justify-center shadow-xl text-xs font-bold border border-zinc-300 pointer-events-none">
                         <i data-lucide="split" class="w-4 h-4"></i>
                     </div>
@@ -164,34 +172,34 @@
             </div>
 
             <!-- Notification Toast -->
-            <div id="toast" class="absolute bottom-6 bg-zinc-900/95 border border-zinc-700 text-zinc-200 px-4 py-2 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2 translate-y-12 opacity-0 transition-all duration-300 z-40 pointer-events-none">
+            <div id="toast" class="absolute bottom-4 sm:bottom-6 bg-zinc-900/95 border border-zinc-700 text-zinc-200 px-4 py-2 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2 translate-y-12 opacity-0 transition-all duration-300 z-40 pointer-events-none">
                 <i data-lucide="info" class="w-4 h-4 text-blue-400"></i>
                 <span id="toast-msg">Notification Message</span>
             </div>
         </main>
 
         <!-- RIGHT SIDEBAR: Histogram, Crop, Curve, Sliders -->
-        <aside class="w-80 border-l border-zinc-800/80 bg-zinc-900/40 flex flex-col shrink-0">
+        <aside id="panel-controls" class="w-full lg:w-80 border-l border-zinc-800/80 bg-zinc-900/40 flex flex-col shrink-0 hidden lg:flex h-full overflow-hidden">
             
             <!-- Histogram Area -->
-            <div class="p-3 border-b border-zinc-800/80 bg-zinc-900/60">
+            <div class="p-3 border-b border-zinc-800/80 bg-zinc-900/60 shrink-0">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                         <i data-lucide="activity" class="w-3.5 h-3.5 text-blue-400"></i> RGB Histogram
                     </span>
                 </div>
-                <canvas id="histogram-canvas" class="w-full h-24 bg-zinc-950/80 rounded-lg border border-zinc-800/80 block"></canvas>
+                <canvas id="histogram-canvas" class="w-full h-20 sm:h-24 bg-zinc-950/80 rounded-lg border border-zinc-800/80 block"></canvas>
             </div>
 
             <!-- Control Tabs -->
-            <div class="flex border-b border-zinc-800 bg-zinc-900/80 p-1 gap-1">
-                <button data-tab="crop" class="tab-btn flex-1 py-1.5 text-xs font-medium rounded-md text-zinc-400 hover:text-zinc-200 transition text-center flex items-center justify-center gap-1">
+            <div class="flex border-b border-zinc-800 bg-zinc-900/80 p-1 gap-1 shrink-0">
+                <button data-tab="crop" class="tab-btn flex-1 py-2 text-xs font-medium rounded-md text-zinc-400 hover:text-zinc-200 transition text-center flex items-center justify-center gap-1">
                     <i data-lucide="crop" class="w-3.5 h-3.5"></i> Crop
                 </button>
-                <button data-tab="curve" class="tab-btn flex-1 py-1.5 text-xs font-medium rounded-md text-zinc-400 hover:text-zinc-200 transition text-center flex items-center justify-center gap-1">
+                <button data-tab="curve" class="tab-btn flex-1 py-2 text-xs font-medium rounded-md text-zinc-400 hover:text-zinc-200 transition text-center flex items-center justify-center gap-1">
                     <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> Curve
                 </button>
-                <button data-tab="adjust" class="tab-btn flex-1 py-1.5 text-xs font-medium rounded-md text-blue-400 bg-zinc-800 transition text-center flex items-center justify-center gap-1 active">
+                <button data-tab="adjust" class="tab-btn flex-1 py-2 text-xs font-medium rounded-md text-blue-400 bg-zinc-800 transition text-center flex items-center justify-center gap-1 active">
                     <i data-lucide="sliders" class="w-3.5 h-3.5"></i> Adjust
                 </button>
             </div>
@@ -205,24 +213,24 @@
                         <span class="text-xs font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
                             <i data-lucide="crop" class="w-4 h-4 text-blue-400"></i> Crop & Rotate
                         </span>
-                        <button id="btn-toggle-crop" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-[11px] font-semibold text-white transition">
+                        <button id="btn-toggle-crop" class="px-2.5 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-[11px] font-semibold text-white transition">
                             Enable Crop Grid
                         </button>
                     </div>
 
                     <div class="space-y-2">
-                        <label class="text-[11px] font-medium text-zinc-400">Aspect Ratio</label>
+                        <label class="text-[11px] font-medium text-zinc-400">Aspect Ratio Presets</label>
                         <div class="grid grid-cols-3 gap-1.5">
-                            <button data-aspect="free" class="btn-aspect px-2 py-1.5 rounded bg-blue-600/30 text-blue-300 border border-blue-500/50 text-xs text-center font-medium">Free</button>
-                            <button data-aspect="1:1" class="btn-aspect px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">1:1 Square</button>
-                            <button data-aspect="4:3" class="btn-aspect px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">4:3 Standard</button>
-                            <button data-aspect="16:9" class="btn-aspect px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">16:9 Wide</button>
-                            <button data-aspect="9:16" class="btn-aspect px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">9:16 Story</button>
-                            <button data-aspect="3:2" class="btn-aspect px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">3:2 Classic</button>
+                            <button data-aspect="free" class="btn-aspect px-2 py-2 rounded bg-blue-600/30 text-blue-300 border border-blue-500/50 text-xs text-center font-medium">Free</button>
+                            <button data-aspect="1:1" class="btn-aspect px-2 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">1:1 Square</button>
+                            <button data-aspect="4:3" class="btn-aspect px-2 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">4:3 Standard</button>
+                            <button data-aspect="16:9" class="btn-aspect px-2 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">16:9 Wide</button>
+                            <button data-aspect="9:16" class="btn-aspect px-2 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">9:16 Story</button>
+                            <button data-aspect="3:2" class="btn-aspect px-2 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 text-center font-medium">3:2 Classic</button>
                         </div>
                     </div>
 
-                    <button id="btn-apply-crop" class="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white shadow-md transition flex items-center justify-center gap-1.5">
+                    <button id="btn-apply-crop" class="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white shadow-md transition flex items-center justify-center gap-1.5">
                         <i data-lucide="check" class="w-4 h-4"></i> Apply Selected Crop
                     </button>
 
@@ -255,21 +263,21 @@
 
                     <!-- Channel Buttons -->
                     <div class="flex rounded-lg bg-zinc-900 p-1 border border-zinc-800 gap-1">
-                        <button data-channel="rgb" class="btn-channel flex-1 py-1 text-xs font-semibold rounded bg-zinc-700 text-white">RGB</button>
-                        <button data-channel="red" class="btn-channel flex-1 py-1 text-xs font-semibold rounded text-red-400 hover:bg-zinc-800">Red</button>
-                        <button data-channel="green" class="btn-channel flex-1 py-1 text-xs font-semibold rounded text-emerald-400 hover:bg-zinc-800">Green</button>
-                        <button data-channel="blue" class="btn-channel flex-1 py-1 text-xs font-semibold rounded text-blue-400 hover:bg-zinc-800">Blue</button>
+                        <button data-channel="rgb" class="btn-channel flex-1 py-1.5 text-xs font-semibold rounded bg-zinc-700 text-white">RGB</button>
+                        <button data-channel="red" class="btn-channel flex-1 py-1.5 text-xs font-semibold rounded text-red-400 hover:bg-zinc-800">Red</button>
+                        <button data-channel="green" class="btn-channel flex-1 py-1.5 text-xs font-semibold rounded text-emerald-400 hover:bg-zinc-800">Green</button>
+                        <button data-channel="blue" class="btn-channel flex-1 py-1.5 text-xs font-semibold rounded text-blue-400 hover:bg-zinc-800">Blue</button>
                     </div>
 
                     <!-- Tone Curve Interactive Canvas -->
-                    <div class="relative bg-zinc-950 p-2 rounded-xl border border-zinc-800 shadow-inner">
-                        <canvas id="curve-canvas" width="250" height="250" class="w-full h-auto cursor-crosshair rounded block"></canvas>
+                    <div class="relative bg-zinc-950 p-2 rounded-xl border border-zinc-800 shadow-inner touch-none">
+                        <canvas id="curve-canvas" width="250" height="250" class="w-full h-auto cursor-crosshair rounded block touch-none"></canvas>
                     </div>
-                    <p class="text-[10px] text-zinc-500 text-center">Click curve to add point. Drag to adjust tones. Double click to delete point.</p>
+                    <p class="text-[10px] text-zinc-500 text-center">Tap/click curve to add point. Drag to adjust. Double tap to remove.</p>
 
                     <div class="grid grid-cols-2 gap-2 pt-2">
-                        <button id="btn-curve-reset" class="px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 border border-zinc-700">Reset Curve</button>
-                        <button id="btn-curve-scurve" class="px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 border border-zinc-700">S-Curve Contrast</button>
+                        <button id="btn-curve-reset" class="px-3 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 border border-zinc-700">Reset Curve</button>
+                        <button id="btn-curve-scurve" class="px-3 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 border border-zinc-700">S-Curve Contrast</button>
                     </div>
                 </div>
 
@@ -383,7 +391,7 @@
                                 <span class="text-zinc-400">Vignette</span>
                                 <span id="val-vignette" class="text-blue-400">0</span>
                             </div>
-                            <input type="range" id="slider-vignette" min="0" max="100" value="0">
+                            <input type="range" id="slider-vignette" min="-100" max="100" value="0">
                         </div>
                     </div>
 
@@ -394,6 +402,22 @@
         </aside>
 
     </div>
+
+    <!-- MOBILE NAVIGATION BOTTOM BAR -->
+    <nav class="lg:hidden h-14 border-t border-zinc-800 bg-zinc-900/95 backdrop-blur-md flex items-center justify-around shrink-0 z-40">
+        <button data-mobile-view="presets" class="btn-mobile-nav flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-zinc-200 text-[10px] font-medium py-1 px-3">
+            <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+            <span>Presets</span>
+        </button>
+        <button data-mobile-view="viewport" class="btn-mobile-nav flex flex-col items-center justify-center gap-1 text-blue-400 font-semibold text-[10px] py-1 px-3">
+            <i data-lucide="image" class="w-4 h-4"></i>
+            <span>Canvas</span>
+        </button>
+        <button data-mobile-view="controls" class="btn-mobile-nav flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-zinc-200 text-[10px] font-medium py-1 px-3">
+            <i data-lucide="sliders" class="w-4 h-4"></i>
+            <span>Controls</span>
+        </button>
+    </nav>
 
     <!-- JAVASCRIPT PROCESSING ENGINE -->
     <script>
@@ -467,6 +491,7 @@
             setupUIControls();
             setupCurveCanvas();
             setupCropInteractions();
+            setupMobileViewNavigation();
             loadSampleImage('sunset');
         });
 
@@ -757,28 +782,28 @@
         function setupCurveCanvas() {
             drawCurveCanvas();
 
-            curveCanvas.addEventListener('mousedown', (e) => {
+            const handleCurveStart = (clientX, clientY) => {
                 const rect = curveCanvas.getBoundingClientRect();
-                const mx = ((e.clientX - rect.left) / rect.width) * 255;
-                const my = (1 - (e.clientY - rect.top) / rect.height) * 255;
+                const mx = ((clientX - rect.left) / rect.width) * 255;
+                const my = (1 - (clientY - rect.top) / rect.height) * 255;
 
                 const pts = curvePoints[currentChannel];
-                activePointIndex = pts.findIndex(p => Math.hypot(p.x - mx, p.y - my) < 20);
+                activePointIndex = pts.findIndex(p => Math.hypot(p.x - mx, p.y - my) < 25);
 
                 if (activePointIndex === -1) {
                     pts.push({ x: mx, y: my });
                     pts.sort((a, b) => a.x - b.x);
-                    activePointIndex = pts.findIndex(p => Math.abs(p.x - mx) < 2);
+                    activePointIndex = pts.findIndex(p => Math.abs(p.x - mx) < 3);
                 }
                 drawCurveCanvas();
                 renderImage();
-            });
+            };
 
-            curveCanvas.addEventListener('mousemove', (e) => {
+            const handleCurveMove = (clientX, clientY) => {
                 if (activePointIndex === -1) return;
                 const rect = curveCanvas.getBoundingClientRect();
-                let mx = Math.max(0, Math.min(255, ((e.clientX - rect.left) / rect.width) * 255));
-                let my = Math.max(0, Math.min(255, (1 - (e.clientY - rect.top) / rect.height) * 255));
+                let mx = Math.max(0, Math.min(255, ((clientX - rect.left) / rect.width) * 255));
+                let my = Math.max(0, Math.min(255, (1 - (clientY - rect.top) / rect.height) * 255));
 
                 const pts = curvePoints[currentChannel];
                 pts[activePointIndex].x = mx;
@@ -786,24 +811,53 @@
                 pts.sort((a, b) => a.x - b.x);
                 drawCurveCanvas();
                 renderImage();
-            });
+            };
 
+            // Mouse Events
+            curveCanvas.addEventListener('mousedown', (e) => handleCurveStart(e.clientX, e.clientY));
+            curveCanvas.addEventListener('mousemove', (e) => handleCurveMove(e.clientX, e.clientY));
             window.addEventListener('mouseup', () => { activePointIndex = -1; });
 
-            curveCanvas.addEventListener('dblclick', (e) => {
+            // Touch Events for Mobile
+            curveCanvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 0) {
+                    handleCurveStart(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
+
+            curveCanvas.addEventListener('touchmove', (e) => {
+                if (e.touches.length > 0) {
+                    handleCurveMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchend', () => { activePointIndex = -1; });
+
+            // Double Tap / Double Click to Delete Point
+            let lastTapTime = 0;
+            const handleCurveDblClick = (clientX, clientY) => {
                 const rect = curveCanvas.getBoundingClientRect();
-                const mx = ((e.clientX - rect.left) / rect.width) * 255;
-                const my = (1 - (e.clientY - rect.top) / rect.height) * 255;
+                const mx = ((clientX - rect.left) / rect.width) * 255;
+                const my = (1 - (clientY - rect.top) / rect.height) * 255;
 
                 const pts = curvePoints[currentChannel];
                 if (pts.length > 2) {
-                    const idx = pts.findIndex(p => Math.hypot(p.x - mx, p.y - my) < 20);
+                    const idx = pts.findIndex(p => Math.hypot(p.x - mx, p.y - my) < 30);
                     if (idx !== -1) {
                         pts.splice(idx, 1);
                         drawCurveCanvas();
                         renderImage();
                     }
                 }
+            };
+
+            curveCanvas.addEventListener('dblclick', (e) => handleCurveDblClick(e.clientX, e.clientY));
+            curveCanvas.addEventListener('touchend', (e) => {
+                const now = Date.now();
+                if (now - lastTapTime < 300 && e.changedTouches.length > 0) {
+                    handleCurveDblClick(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                }
+                lastTapTime = now;
             });
         }
 
@@ -852,7 +906,7 @@
 
                 curveCtx.fillStyle = '#3b82f6';
                 curveCtx.beginPath();
-                curveCtx.arc(px, py, 5, 0, Math.PI * 2);
+                curveCtx.arc(px, py, 6, 0, Math.PI * 2);
                 curveCtx.fill();
 
                 curveCtx.strokeStyle = '#ffffff';
@@ -923,7 +977,6 @@
             showToast('Auto Enhancement Applied');
         }
 
-        // Fully Interactive Manual Crop Dragging Engine
         function updateCropOverlayPosition() {
             const overlay = document.getElementById('crop-overlay');
             if (!isCropEnabled) {
@@ -944,59 +997,76 @@
         function setupCropInteractions() {
             const overlay = document.getElementById('crop-overlay');
 
-            overlay.addEventListener('mousedown', (e) => {
+            const handleCropStart = (clientX, clientY, target) => {
                 if (!isCropEnabled) return;
                 isDraggingCrop = true;
-                dragStartX = e.clientX;
-                dragStartY = e.clientY;
+                dragStartX = clientX;
+                dragStartY = clientY;
                 initialCropRect = { ...cropRect };
 
-                const handle = e.target.dataset.handle;
+                const handle = target.dataset.handle;
                 cropDragMode = handle ? handle : 'move';
-                e.stopPropagation();
-            });
+            };
 
-            window.addEventListener('mousemove', (e) => {
+            const handleCropMove = (clientX, clientY) => {
                 if (!isDraggingCrop || !isCropEnabled) return;
 
                 const cW = mainCanvas.clientWidth;
                 const cH = mainCanvas.clientHeight;
-                const dx = (e.clientX - dragStartX) / cW;
-                const dy = (e.clientY - cH) / cH ? (e.clientY - dragStartY) / cH : 0; // Fixed calculation
+                const dx = (clientX - dragStartX) / cW;
+                const dy = (clientY - dragStartY) / cH;
 
                 if (cropDragMode === 'move') {
                     cropRect.x = Math.max(0, Math.min(1 - cropRect.w, initialCropRect.x + dx));
-                    cropRect.y = Math.max(0, Math.min(1 - cropRect.h, initialCropRect.y + (e.clientY - dragStartY) / cH));
+                    cropRect.y = Math.max(0, Math.min(1 - cropRect.h, initialCropRect.y + dy));
                 } else if (cropDragMode === 'tl') {
                     const newX = Math.max(0, Math.min(initialCropRect.x + initialCropRect.w - 0.05, initialCropRect.x + dx));
-                    const newY = Math.max(0, Math.min(initialCropRect.y + initialCropRect.h - 0.05, initialCropRect.y + (e.clientY - dragStartY) / cH));
+                    const newY = Math.max(0, Math.min(initialCropRect.y + initialCropRect.h - 0.05, initialCropRect.y + dy));
                     cropRect.w = initialCropRect.w + (initialCropRect.x - newX);
                     cropRect.h = initialCropRect.h + (initialCropRect.y - newY);
                     cropRect.x = newX;
                     cropRect.y = newY;
                 } else if (cropDragMode === 'tr') {
                     const newW = Math.max(0.05, Math.min(1 - initialCropRect.x, initialCropRect.w + dx));
-                    const newY = Math.max(0, Math.min(initialCropRect.y + initialCropRect.h - 0.05, initialCropRect.y + (e.clientY - dragStartY) / cH));
+                    const newY = Math.max(0, Math.min(initialCropRect.y + initialCropRect.h - 0.05, initialCropRect.y + dy));
                     cropRect.w = newW;
                     cropRect.h = initialCropRect.h + (initialCropRect.y - newY);
                     cropRect.y = newY;
                 } else if (cropDragMode === 'bl') {
                     const newX = Math.max(0, Math.min(initialCropRect.x + initialCropRect.w - 0.05, initialCropRect.x + dx));
-                    const newH = Math.max(0.05, Math.min(1 - initialCropRect.y, initialCropRect.h + (e.clientY - dragStartY) / cH));
+                    const newH = Math.max(0.05, Math.min(1 - initialCropRect.y, initialCropRect.h + dy));
                     cropRect.w = initialCropRect.w + (initialCropRect.x - newX);
                     cropRect.h = newH;
                     cropRect.x = newX;
                 } else if (cropDragMode === 'br') {
                     cropRect.w = Math.max(0.05, Math.min(1 - initialCropRect.x, initialCropRect.w + dx));
-                    cropRect.h = Math.max(0.05, Math.min(1 - initialCropRect.y, initialCropRect.h + (e.clientY - dragStartY) / cH));
+                    cropRect.h = Math.max(0.05, Math.min(1 - initialCropRect.y, initialCropRect.h + dy));
                 }
 
                 updateCropOverlayPosition();
+            };
+
+            overlay.addEventListener('mousedown', (e) => {
+                handleCropStart(e.clientX, e.clientY, e.target);
+                e.stopPropagation();
             });
 
-            window.addEventListener('mouseup', () => {
-                isDraggingCrop = false;
-            });
+            overlay.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 0) {
+                    handleCropStart(e.touches[0].clientX, e.touches[0].clientY, e.target);
+                    e.stopPropagation();
+                }
+            }, { passive: true });
+
+            window.addEventListener('mousemove', (e) => handleCropMove(e.clientX, e.clientY));
+            window.addEventListener('touchmove', (e) => {
+                if (e.touches.length > 0) {
+                    handleCropMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
+
+            window.addEventListener('mouseup', () => { isDraggingCrop = false; });
+            window.addEventListener('touchend', () => { isDraggingCrop = false; });
         }
 
         function applyCrop() {
@@ -1087,6 +1157,58 @@
             drawHistogram();
             renderImage();
             showToast(horizontal ? 'Flipped Horizontally' : 'Flipped Vertically');
+        }
+
+        // Mobile Panel Switching Navigation
+        function setupMobileViewNavigation() {
+            const navBtns = document.querySelectorAll('.btn-mobile-nav');
+            const panelPresets = document.getElementById('panel-presets');
+            const panelViewport = document.getElementById('panel-viewport');
+            const panelControls = document.getElementById('panel-controls');
+
+            navBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetView = btn.dataset.mobileView;
+
+                    navBtns.forEach(b => {
+                        b.classList.remove('text-blue-400', 'font-semibold');
+                        b.classList.add('text-zinc-400', 'font-medium');
+                    });
+                    btn.classList.add('text-blue-400', 'font-semibold');
+                    btn.classList.remove('text-zinc-400', 'font-medium');
+
+                    // Handle panels on small screen
+                    if (window.innerWidth < 1024) {
+                        panelPresets.classList.add('hidden');
+                        panelViewport.classList.add('hidden');
+                        panelControls.classList.add('hidden');
+
+                        if (targetView === 'presets') {
+                            panelPresets.classList.remove('hidden');
+                        } else if (targetView === 'viewport') {
+                            panelViewport.classList.remove('hidden');
+                            updateCropOverlayPosition();
+                        } else if (targetView === 'controls') {
+                            panelControls.classList.remove('hidden');
+                            drawCurveCanvas();
+                            drawHistogram();
+                        }
+                    }
+                });
+            });
+
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 1024) {
+                    panelPresets.classList.remove('hidden');
+                    panelViewport.classList.remove('hidden');
+                    panelControls.classList.remove('hidden');
+                } else {
+                    panelPresets.classList.add('hidden');
+                    panelViewport.classList.remove('hidden');
+                    panelControls.classList.add('hidden');
+                }
+                updateCropOverlayPosition();
+            });
         }
 
         function setupUIControls() {
@@ -1181,10 +1303,18 @@
                 showToast(isSplitComparing ? 'Split View Enabled (Drag divider)' : 'Split View Disabled');
             });
 
-            // Interactive dragging for Split View Divider
+            // Interactive dragging for Split View Divider (Touch & Mouse)
             let isDraggingSplit = false;
-            const container = document.getElementById('canvas-container');
             const divider = document.getElementById('split-divider');
+
+            const handleSplitMove = (clientX) => {
+                if (!isDraggingSplit || !isSplitComparing) return;
+                const rect = mainCanvas.getBoundingClientRect();
+                const x = clientX - rect.left;
+                splitPosition = Math.max(0, Math.min(1, x / rect.width));
+                divider.style.left = `${splitPosition * 100}%`;
+                renderImage();
+            };
 
             divider.addEventListener('mousedown', (e) => {
                 if (!isSplitComparing) return;
@@ -1192,18 +1322,19 @@
                 e.stopPropagation();
             });
 
-            window.addEventListener('mousemove', (e) => {
-                if (!isDraggingSplit || !isSplitComparing) return;
-                const rect = mainCanvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                splitPosition = Math.max(0, Math.min(1, x / rect.width));
-                divider.style.left = `${splitPosition * 100}%`;
-                renderImage();
-            });
+            divider.addEventListener('touchstart', (e) => {
+                if (!isSplitComparing) return;
+                isDraggingSplit = true;
+                e.stopPropagation();
+            }, { passive: true });
 
-            window.addEventListener('mouseup', () => {
-                isDraggingSplit = false;
-            });
+            window.addEventListener('mousemove', (e) => handleSplitMove(e.clientX));
+            window.addEventListener('touchmove', (e) => {
+                if (e.touches.length > 0) handleSplitMove(e.touches[0].clientX);
+            }, { passive: true });
+
+            window.addEventListener('mouseup', () => { isDraggingSplit = false; });
+            window.addEventListener('touchend', () => { isDraggingSplit = false; });
 
             document.getElementById('btn-export').addEventListener('click', () => {
                 mainCanvas.toBlob((blob) => {
